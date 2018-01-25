@@ -1,5 +1,7 @@
-let mongoose = load('index.js');
+let meerkat = load('index.js');
 
-mongoose('test', function(t) {
-    t.pass('test passed')
+meerkat.test('test', function(t) {
+    t.test('test', function (t) {
+        t.pass('test passed')
+    });
 });
