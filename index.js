@@ -1,14 +1,22 @@
 let Meerkat = {
     initialized: false,
-    count: 0,
+    queue: [],
     test: function (message, callback) {
+        this.queue[this.queue.length] = {
+            message: message,
+            callback: callback
+        }
+    },
+    start: function() {
         let tap = {
             initialized: true,
             depth: typeof this.depth === 'undefined' ? 0 : this.depth + 1,
 
-            count: 0,
+            queue: [],
 
             test: this.test,
+
+            start: this.start,
 
             pass: function (message) {
                 this.printResult(true, message);
@@ -19,8 +27,6 @@ let Meerkat = {
             },
 
             printResult: function (ok, message) {
-                this.count = this.count + 1;
-
                 let printMessage = '';
 
                 for (let i = 0; i < this.depth; i++) {
@@ -28,8 +34,8 @@ let Meerkat = {
                 }
 
                 printMessage += ok ? 'ok' : 'not ok';
-                printMessage += ' ' + JSON.stringify(this.count);
-                printMessage += ' ' + message;
+                printMessage += ' ' + JSON.stringify(this.testNumber);
+                printMessage += ' ' + this.message + ' - ' + message;
 
                 print(printMessage);
             }
@@ -38,7 +44,27 @@ let Meerkat = {
         if (!this.initialized) {
             print('TAP version 13');
         }
-        this.count = this.count + 1;
-        callback(tap);
+
+        for (let i = 0; i < this.queue.length; i++) {
+            let tapInstance = Object.create(tap);
+
+            tapInstance.message = this.queue[i].message
+
+            tapInstance.testNumber = i + 1;
+
+            this.queue[i].callback(tapInstance);
+        }
+
+        let printMessage = '';
+
+        if (typeof this.depth !== 'undefined') {
+            for (let i = 0; i < this.depth + 1; i++) {
+                printMessage += '    ';
+            }
+        }
+
+        printMessage += '1..' + JSON.stringify(this.queue.length);
+
+        print(printMessage);
     }
 }
