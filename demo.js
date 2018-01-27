@@ -1,12 +1,17 @@
 let meerkat = load('index.js');
 
-meerkat.queueTest('test', function (t) {
-    t.pass('test passed');
-    t.end();
-});
+meerkat.queueTest('wrapper', function(t) {
+    t.queueTest('test', function (t) {
+        t.pass('test passed');
+        t.end();
+    });
 
-meerkat.queueTest('test2', function (t) {
-    t.pass('test2 passed');
+    t.queueTest('test2', function (t) {
+        t.fail('test2 failed');
+        t.end();
+    });
+
+    t.runTests();
     t.end();
 });
 
