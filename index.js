@@ -37,12 +37,119 @@ let Meerkat = {
                 this._assertionCount = this._assertionCount + 1;
                 this._printResult(false, this._assertionCount, message);
             },
+
+            ok: function(actual, message) {
+                if (actual) {
+                    return this.pass(message);
+                }
+
+                return this.fail(message);
+            },
+
+            notOk: function (actual, message) {
+                if (!actual) {
+                    return this.pass(message);
+                }
+
+                return this.fail(message);
+            },
+
+            equal: function(actual, expected, message) {
+                if (actual === expected) {
+                    return this.pass(message);
+                }
+
+                return this.fail(message);
+            },
+
+            notEqual: function (actual, expected, message) {
+                if (actual !== expected) {
+                    return this.pass(message);
+                }
+
+                return this.fail(message);
+            },
+
+            _same: function(actual, expected) {
+                if (typeof actual !== typeof expected) {
+                    return false;
+                }
+
+                if (typeof actual === 'object') {
+                    let actualLength = 0;
+                    let expectedLength = 0;
+
+                    for (let key in actual) {
+                        if (
+                            typeof expected[key] === 'undefined' ||
+                            !this._same(actual[key], expected[key])
+                        ) {
+                            return false;
+                        }
+
+                        actualLength++;
+                    }
+
+                    for (let key in expected) {
+                        expectedLength++;
+                    }
+
+                    if (actualLength !== expectedLength) {
+                        return false;
+                    }
+
+                    return true;
+                } else if (typeof actual === 'array') {
+                    if (actual.length !== expected.length) {
+                        return false;
+                    }
+
+                    let matched = [];
+
+                    for (let a = 0; a < actual.length; a++) {
+                        let match = false;
+                        for (let e = 0; e < expected.length; e++) {
+                            if (matched[e] !== true && this._same(actual[a], expected[e])) {
+                                matched[e] = true;
+                                match = true;
+                                break;
+                            }
+                        }
+
+                        if (!match) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                } else {
+                    return actual === expected;
+                }
+            },
+
+            same: function (actual, expected, message) {
+                if (this._same(actual, expected)) {
+                    return this.pass(message);
+                }
+
+                return this.fail(message);
+            },
+
+            notSame: function (actual, expected, message) {
+                if (!this._same(actual, expected)) {
+                    return this.pass(message);
+                }
+
+                return this.fail(message);
+            }
         };
 
         this._queue[this._pointer++].callback(tap);
     },
 
     _printResult: function (ok, count, message) {
+        message = message || '(anonymous)';
+
         let printMessage = this._getPadding();
         printMessage += ok ? 'ok' : 'not ok';
         printMessage += ' ' + JSON.stringify(count);
