@@ -1,3 +1,5 @@
+print('TAP version 13 #');
+
 let Meerkat = {
     _initialized: false,
     _queue: [],
@@ -5,8 +7,16 @@ let Meerkat = {
     _assertionCount: 0,
     _depth: 0,
     _message: '',
+    _planned: false,
+    _runningTests: false,
+    _shouldEnd: false,
     _pumpQueue: function() {
         if (this._pointer >= this._queue.length) {
+            this._runningTests = false;
+
+            if (this._shouldEnd) {
+                this._end();
+            }
             return;
         }
 
@@ -18,6 +28,9 @@ let Meerkat = {
             _queue: [],
             _pointer: 0,
             _assertionCount: 0,
+            _planned: false,
+            _runningTests: false,
+            _shouldEnd: false,
             _parent: this,
             _message: this._queue[this._pointer].message,
             _testNumber: this._pointer + 1,
@@ -25,8 +38,10 @@ let Meerkat = {
             _printResult:this._printResult,
             _printEnd: this._printEnd,
             _getPadding: this._getPadding,
+            plan: this.plan,
             queueTest: this.queueTest,
             runTests: this.runTests,
+            _end: this._end,
             end: this.end,
             pass: function (message) {
                 this._assertionCount = this._assertionCount + 1;
@@ -176,6 +191,11 @@ let Meerkat = {
         return padding;
     },
 
+    plan: function name(number) {
+        print('1..' + JSON.stringify(number) + ' #')
+        this._planned = true;
+    },
+
     queueTest: function (message, callback) {
         this._queue[this._queue.length] = {
             message: message,
@@ -183,19 +203,27 @@ let Meerkat = {
         }
     },
     runTests: function() {
-        if (!this._initialized) {
-            print('TAP version 13 #');
-        }
-
+        this._runningTests = true;
         this._pumpQueue();
     },
 
-    end: function () {
-        this._printEnd();
+    _end: function () {
+        if (!this._planned) {
+            this._printEnd();
+        }
+
         if (typeof this._parent !== 'undefined') {
             this._parent._printResult(true, this._parent._pointer, this._message);
             print();
             this._parent._pumpQueue();
         }
+    },
+
+    end: function () {
+        if (this._runningTests) {
+            this._shouldEnd = true;
+        } else {
+            this._end();
+        }
     }
-}
+};
