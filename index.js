@@ -43,12 +43,12 @@ let Meerkat = {
             runTests: this.runTests,
             _end: this._end,
             end: this.end,
-            pass: function (message) {
+            pass: function(message) {
                 this._assertionCount = this._assertionCount + 1;
                 this._printResult(true, this._assertionCount, message);
             },
 
-            fail: function (message) {
+            fail: function(message) {
                 this._assertionCount = this._assertionCount + 1;
                 this._printResult(false, this._assertionCount, message);
             },
@@ -61,7 +61,7 @@ let Meerkat = {
                 return this.fail(message);
             },
 
-            notOk: function (actual, message) {
+            notOk: function(actual, message) {
                 if (!actual) {
                     return this.pass(message);
                 }
@@ -77,7 +77,7 @@ let Meerkat = {
                 return this.fail(message);
             },
 
-            notEqual: function (actual, expected, message) {
+            notEqual: function(actual, expected, message) {
                 if (actual !== expected) {
                     return this.pass(message);
                 }
@@ -142,7 +142,7 @@ let Meerkat = {
                 }
             },
 
-            same: function (actual, expected, message) {
+            same: function(actual, expected, message) {
                 if (this._same(actual, expected)) {
                     return this.pass(message);
                 }
@@ -150,7 +150,7 @@ let Meerkat = {
                 return this.fail(message);
             },
 
-            notSame: function (actual, expected, message) {
+            notSame: function(actual, expected, message) {
                 if (!this._same(actual, expected)) {
                     return this.pass(message);
                 }
@@ -162,7 +162,7 @@ let Meerkat = {
         this._queue[this._pointer++].callback(tap);
     },
 
-    _printResult: function (ok, count, message) {
+    _printResult: function(ok, count, message) {
         message = message || '(anonymous)';
 
         let printMessage = this._getPadding();
@@ -191,12 +191,12 @@ let Meerkat = {
         return padding;
     },
 
-    plan: function name(number) {
+    plan: function(number) {
         print('1..' + JSON.stringify(number) + ' #')
         this._planned = true;
     },
 
-    queueTest: function (message, callback) {
+    queueTest: function(message, callback) {
         this._queue[this._queue.length] = {
             message: message,
             callback: callback
@@ -207,7 +207,7 @@ let Meerkat = {
         this._pumpQueue();
     },
 
-    _end: function () {
+    _end: function() {
         if (!this._planned) {
             this._printEnd();
         }
@@ -219,11 +219,60 @@ let Meerkat = {
         }
     },
 
-    end: function () {
+    end: function() {
         if (this._runningTests) {
             this._shouldEnd = true;
         } else {
             this._end();
         }
+    },
+
+    load: function(filepath, mocks) {
+        let lastSlash = -1;
+        let path = '';
+        let file = '';
+
+        let realLoad = global.load;
+
+        for (let i = 0; i < filepath.length; i++) {
+            if (filepath[i] === '/') {
+                lastSlash = i;
+            }
+        }
+
+        if (lastSlash > -1) {
+            path = filepath.slice(0, lastSlash) + '/';
+            file = filepath.slice(lastSlash + 1, filepath.length);
+        } else {
+            file = filepath;
+        }
+
+        let mockglobal = {
+            isNaN: isNaN,
+            NaN: NaN,
+            Object: Object,
+            JSON: JSON,
+            chr: chr,
+            gc: gc,
+            die: die,
+            getMJS: getMJS,
+            mkstr: mkstr,
+            ffi_cb_free: ffi_cb_free,
+            ffi: ffi,
+            print: print,
+            load: function(file, loadGlobal) {
+                if (typeof loadGlobal !== 'undefined') {
+                    realLoad(path + file, loadGlobal);
+                } else {
+                    realLoad(path + file);
+                }
+            }
+        };
+
+        mockglobal.global = mockglobal;
+
+        load(path + file, mockglobal);
+
+        return mockglobal;
     }
 };

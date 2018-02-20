@@ -1,5 +1,7 @@
 let meerkat = load('index.js');
 
+let demo = meerkat.load('test/demo.js');
+
 meerkat.plan(2);
 
 meerkat.queueTest('wrapper', function(t) {
@@ -76,6 +78,12 @@ meerkat.queueTest('wrapper', function(t) {
     t.runTests();
     t.end();
 });
+
+meerkat.queueTest('load', function(t) {
+    t.equal(demo.potato, true)
+    t.equal(demo.cheese, 'badger');
+    t.end();
+})
 
 meerkat.runTests();
 meerkat.end();
